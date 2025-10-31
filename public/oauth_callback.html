@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OAuth Callback</title>
+  </head>
+  <body>
+    <script>
+      // This page is opened by the Google OAuth popup. It receives tokens in URL fragment
+      // and sends them back to the opener window via postMessage, then closes itself.
+      (function () {
+        try {
+          const params = {};
+          const hash = window.location.hash.substring(1) || window.location.search.substring(1);
+          hash.split('&').forEach(pair => {
+            const [k, v] = pair.split('=');
+            if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+          });
+
+          // send the whole params object back
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({ type: 'oauth_callback', data: params }, window.location.origin);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        // close the popup after a short delay
+        setTimeout(() => window.close(), 200);
+      })();
+    </script>
+  </body>
+</html>
