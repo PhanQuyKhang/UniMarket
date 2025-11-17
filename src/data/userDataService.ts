@@ -8,7 +8,6 @@ export interface UserData {
   createdAt: string;
   lastLogin: string;
   items: Item[];
-  favoriteItems: string[]; // Array of item IDs
   exchangeRequests: ExchangeRequest[];
   phone?: string;
   facebook?: string;
@@ -119,7 +118,6 @@ export class UserDataService {
         createdAt: now,
         lastLogin: now,
         items: userData.items || [],
-        favoriteItems: userData.favoriteItems || [],
         exchangeRequests: userData.exchangeRequests || [],
         isAdmin: !!userData['isAdmin'],
       };
@@ -163,21 +161,6 @@ export class UserDataService {
     }
   }
 
-  // Add/remove favorite item
-  static toggleFavorite(userEmail: string, itemId: string): void {
-    const database = this.loadUsers();
-    const userIndex = database.users.findIndex(user => user.email === userEmail);
-    
-    if (userIndex >= 0) {
-      const favoriteIndex = database.users[userIndex].favoriteItems.indexOf(itemId);
-      if (favoriteIndex >= 0) {
-        database.users[userIndex].favoriteItems.splice(favoriteIndex, 1);
-      } else {
-        database.users[userIndex].favoriteItems.push(itemId);
-      }
-      this.saveUsers(database);
-    }
-  }
 
   // Add exchange request
   static addExchangeRequest(request: ExchangeRequest): void {
@@ -294,24 +277,6 @@ export class UserDataService {
     return user ? user.exchangeRequests : [];
   }
 
-  // Remove item from all users' favorite lists (used when item is deleted)
-  static removeItemFromAllFavorites(itemId: string): void {
-    const database = this.loadUsers();
-    let hasChanges = false;
-
-    database.users.forEach(user => {
-      const initialLength = user.favoriteItems.length;
-      user.favoriteItems = user.favoriteItems.filter(favId => favId !== itemId);
-      if (user.favoriteItems.length !== initialLength) {
-        hasChanges = true;
-      }
-    });
-
-    if (hasChanges) {
-      database.lastUpdated = new Date().toISOString();
-      this.saveUsers(database);
-    }
-  }
 
   // Remove all exchange requests involving a deleted item
   static removeExchangeRequestsForItem(itemId: string): void {
