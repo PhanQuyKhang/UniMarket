@@ -294,65 +294,6 @@ export class UserDataService {
     return user ? user.exchangeRequests : [];
   }
 
-  // Initialize with sample data if no data exists
-  static initializeWithSampleData(): void {
-    const existing = this.loadUsers();
-    if (existing.users.length === 0) {
-      const sampleData: UserDatabase = {
-        users: [
-         // admin user
-          {
-            id: "user_admin",
-            email: "admin@university.edu",
-            name: "Admin User",
-            picture: "",
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-            items: [],
-            favoriteItems: [],
-            exchangeRequests: [],
-            isAdmin: true
-          },
-          {
-            id: "user_sample",
-            email: "sample@university.edu",
-            name: "Sample User",
-            picture: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=60",
-            createdAt: "2025-10-10T00:00:00.000Z",
-            lastLogin: "2025-10-10T00:00:00.000Z",
-            items: [
-              {
-                id: "sample_item_1",
-                title: "Sample MacBook Pro 13-inch 2020",
-                location: "North Campus",
-                timePosted: "2025-10-10T00:00:00.000Z",
-                category: "electronics",
-                condition: "excellent",
-                images: [
-                  "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800&h=600&fit=crop&auto=format&q=60"
-                ],
-                description: "Sample MacBook in excellent condition for exchange",
-                seller: {
-                  name: "Sample User",
-                  avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=60",
-                  rating: 4.8
-                },
-                isFavorited: false,
-                status: 'available' as const,
-                ownerId: "sample@university.edu"
-              }
-            ],
-            favoriteItems: [],
-            exchangeRequests: []
-          }
-        ],
-        lastUpdated: new Date().toISOString(),
-        reports: []
-      };
-      this.saveUsers(sampleData);
-    }
-  }
-
   // Remove item from all users' favorite lists (used when item is deleted)
   static removeItemFromAllFavorites(itemId: string): void {
     const database = this.loadUsers();

@@ -38,7 +38,7 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState<Item[]>(() => {
     // Initialize with sample data if needed
-    UserDataService.initializeWithSampleData();
+    //UserDataService.initializeWithSampleData();
     
     // Load items from all users on startup
     const allItems = UserDataService.getAllItems();
