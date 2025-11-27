@@ -19,11 +19,11 @@ interface ItemDetailProps {
   onRejectExchange?: (requestId: string) => void;
   onCompleteExchange?: (requestId: string) => void;
   userItems?: Item[];
-  onSubmitExchange?: (targetItemId: string, selectedItemIds: string[]) => void;
+  onSubmitExchange?: (targetItemId: string, selectedItemIds: string[], targetItemOwnerId: string) => void;
   showExchangeInterface?: boolean;
   allItems?: Item[];
   onViewItem?: (itemId: string) => void;
-  onViewUserProfile?: (userEmail: string) => void;
+  onViewUserProfile?: (userId: string) => void;
 }
 
 export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests, onAcceptExchange, onRejectExchange, onCompleteExchange, userItems = [], onSubmitExchange, showExchangeInterface = false, allItems = [], onViewItem, onViewUserProfile }: ItemDetailProps) {
@@ -45,7 +45,7 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-lg">
             <ImageWithFallback
-              src={item.images[0]}
+              src={item.images && item.images.length > 0 ? item.images[0] : ''}
               alt={item.title}
               className="w-full h-full object-cover"
             />
@@ -76,7 +76,7 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
               <div className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
@@ -95,8 +95,8 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
 
             <div className="mb-6">
               <Badge variant={item.status === 'available' ? 'default' : item.status === 'exchanging' ? 'secondary' : 'outline'} className="text-sm">
-                {item.status === 'available' ? 'Available for Exchange' : 
-                 item.status === 'exchanging' ? 'Exchange in Progress' : 'Already Exchanged'}
+                {item.status === 'available' ? 'Available for Exchange' :
+                  item.status === 'exchanging' ? 'Exchange in Progress' : 'Already Exchanged'}
               </Badge>
             </div>
           </div>
@@ -107,13 +107,21 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => onViewUserProfile?.(item.ownerId || item.seller.name)}
+                    onClick={() => {
+                      console.log('View profile clicked. ownerId:', item.ownerId, 'seller.name:', item.seller.name);
+                      if (item.ownerId) {
+                        onViewUserProfile?.(item.ownerId);
+                      } else {
+                        console.warn('No ownerId found for item, falling back to name (might fail if backend expects ID)');
+                        onViewUserProfile?.(item.seller.name);
+                      }
+                    }}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
                     title="View seller profile"
                   >
                     <Avatar>
                       <AvatarImage src={item.seller.avatar} alt={item.seller.name} />
-                      <AvatarFallback>{item.seller.name[0]}</AvatarFallback>
+                      <AvatarFallback>{item.seller.name ? item.seller.name[0] : 'U'}</AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium">{item.seller.name}</p>
@@ -127,70 +135,76 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                   </button>
                 </div>
               </div>
-              
+
               {isOwner ? (
                 <div className="space-y-2">
                   <p className="text-sm font-medium">This is your item</p>
                   {exchangeRequests && exchangeRequests.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Exchange Requests ({exchangeRequests.length}):</p>
-                      {exchangeRequests.filter(req => req.status === 'pending').map((request) => {
-                        const offeredItems = request.offeredItemIds.map(id => 
-                          allItems.find(item => item.id === id)
-                        ).filter((item): item is Item => item !== undefined);
-                        
-                        return (
-                          <div key={request.id} className="p-3 border rounded-lg bg-yellow-50">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm font-medium">{request.requesterName}</p>
-                              <Badge variant="outline" className="text-xs">Pending</Badge>
-                            </div>
-                            
-                            {/* Offered Items */}
-                            <div className="mb-3">
-                              <p className="text-xs text-muted-foreground mb-2">
-                                Offering {request.offeredItemIds.length} item(s) for exchange:
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {offeredItems.map((offeredItem) => (
-                                  <button
-                                    key={offeredItem.id}
-                                    onClick={() => onViewItem?.(offeredItem.id)}
-                                    className="flex items-center gap-2 p-2 border rounded-lg bg-white hover:bg-gray-50 hover:border-blue-300 transition-all cursor-pointer"
-                                    title="Click to view item details"
-                                  >
-                                    <img 
-                                      src={offeredItem.images[0]} 
-                                      alt={offeredItem.title}
-                                      className="w-8 h-8 object-cover rounded"
-                                    />
-                                    <div className="text-left">
-                                      <p className="text-xs font-medium text-gray-800 truncate max-w-32">
-                                        {offeredItem.title}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {offeredItem.condition}
-                                      </p>
-                                    </div>
-                                  </button>
-                                ))}
+                      {/* Only show incoming requests for THIS item */}
+                      {exchangeRequests.filter(req => req.targetItemId === item.id && req.status === 'pending').length > 0 && (
+                        <>
+                          <p className="text-sm text-muted-foreground">Exchange Requests:</p>
+                          {exchangeRequests.filter(req => req.targetItemId === item.id && req.status === 'pending').map((request) => {
+                            const offeredItems = (request.offeredItemIds || []).map(id =>
+                              allItems.find(item => String(item.id) === String(id))
+                            ).filter((item): item is Item => item !== undefined);
+
+                            return (
+                              <div key={request.id} className="p-3 border rounded-lg bg-yellow-50">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-sm font-medium">{request.requesterName}</p>
+                                  <Badge variant="outline" className="text-xs">Pending</Badge>
+                                </div>
+
+                                {/* Offered Items */}
+                                <div className="mb-3">
+                                  <p className="text-xs text-muted-foreground mb-2">
+                                    Offering {request.offeredItemIds.length} item(s) for exchange:
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {offeredItems.map((offeredItem) => (
+                                      <button
+                                        key={offeredItem.id}
+                                        onClick={() => onViewItem?.(offeredItem.id)}
+                                        className="flex items-center gap-2 p-2 border rounded-lg bg-white hover:bg-gray-50 hover:border-blue-300 transition-all cursor-pointer"
+                                        title="Click to view item details"
+                                      >
+                                        <img
+                                          src={offeredItem.images[0]}
+                                          alt={offeredItem.title}
+                                          className="w-8 h-8 object-cover rounded"
+                                        />
+                                        <div className="text-left">
+                                          <p className="text-xs font-medium text-gray-800 truncate max-w-32">
+                                            {offeredItem.title}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            {offeredItem.condition}
+                                          </p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" onClick={() => onAcceptExchange?.(request.id)} className="border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600">
+                                    Accept
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => onRejectExchange?.(request.id)} className="border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600">
+                                    Reject
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => onAcceptExchange?.(request.id)} className="border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600">
-                                Accept
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => onRejectExchange?.(request.id)} className="border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600">
-                                Reject
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {exchangeRequests.filter(req => req.status !== 'pending').length > 0 && (
+                            );
+                          })}
+                        </>
+                      )}
+
+                      {exchangeRequests.filter(req => req.targetItemId === item.id && req.status !== 'pending').length > 0 && (
                         <p className="text-xs text-muted-foreground mt-2">
-                          View all requests in the Exchanges page
+                          View past requests in the Exchanges page
                         </p>
                       )}
                     </div>
@@ -213,19 +227,19 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Button 
-                    className="w-full gap-2" 
+                  <Button
+                    className="w-full gap-2"
                     onClick={() => {
                       console.log('Exchange button clicked for item:', item.id, 'Status:', item.status);
                       const newShowExchange = !showExchange;
                       setShowExchange(newShowExchange);
-                      
+
                       // Scroll to exchange section when opening
                       if (newShowExchange) {
                         setTimeout(() => {
-                          exchangeSectionRef.current?.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'start' 
+                          exchangeSectionRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
                           });
                         }, 100);
                       }
@@ -233,8 +247,8 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                     disabled={item.status !== 'available'}
                   >
                     <RefreshCw className="h-4 w-4" />
-                    {item.status !== 'available' ? `Cannot Exchange (${item.status})` : 
-                     showExchange ? 'Hide Exchange Options' : 'Request Exchange'}
+                    {item.status !== 'available' ? `Cannot Exchange (${item.status})` :
+                      showExchange ? 'Hide Exchange Options' : 'Request Exchange'}
                   </Button>
                 </div>
               )}
@@ -273,7 +287,7 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
             <RefreshCw className="h-5 w-5" />
             Exchange Options
           </h3>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Target Item (What you want) */}
             <div className="bg-white rounded-lg p-4 border">
@@ -281,8 +295,8 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                 👤 Item You Want
               </h4>
               <div className="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">
-                <img 
-                  src={item.images[0]} 
+                <img
+                  src={item.images[0]}
                   alt={item.title}
                   className="w-full h-32 object-cover rounded mb-3"
                 />
@@ -310,18 +324,17 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                   <p className="text-sm font-medium mb-3">Select one item to offer:</p>
                   <div className="max-h-80 overflow-y-auto space-y-2">
                     {userItems.filter(userItem => userItem.status === 'available').map((userItem) => (
-                      <div 
-                        key={userItem.id} 
-                        className={`cursor-pointer border-2 rounded-lg p-3 transition-all hover:shadow-md ${
-                          selectedItemId === userItem.id 
-                            ? 'border-blue-500 bg-blue-50 shadow-md' 
-                            : 'border-gray-200 hover:border-blue-300'
-                        }`}
+                      <div
+                        key={userItem.id}
+                        className={`cursor-pointer border-2 rounded-lg p-3 transition-all hover:shadow-md ${selectedItemId === userItem.id
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-300'
+                          }`}
                         onClick={() => setSelectedItemId(userItem.id === selectedItemId ? "" : userItem.id)}
                       >
                         <div className="flex items-center gap-3">
-                          <img 
-                            src={userItem.images[0]} 
+                          <img
+                            src={userItem.images[0]}
                             alt={userItem.title}
                             className="w-16 h-16 object-cover rounded-md"
                           />
@@ -332,11 +345,10 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
                               Condition: {userItem.condition}
                             </p>
                           </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            selectedItemId === userItem.id 
-                              ? 'border-blue-500 bg-blue-500' 
-                              : 'border-gray-400'
-                          }`}>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedItemId === userItem.id
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-400'
+                            }`}>
                             {selectedItemId === userItem.id && (
                               <div className="w-2 h-2 bg-white rounded-full"></div>
                             )}
@@ -380,19 +392,19 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
 
               {/* Action Buttons */}
               <div className="mt-6 flex justify-between gap-4">
-                <button 
+                <button
                   className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all"
                   onClick={() => setShowExchange(false)}
                 >
                   ❌ Cancel
                 </button>
-                
-                <button 
+
+                <button
                   className="px-6 py-3 border-2 border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 rounded-lg font-semibold transition-all"
                   onClick={() => {
                     if (selectedItemId && onSubmitExchange) {
-                      console.log('Calling onSubmitExchange with:', item.id, [selectedItemId]);
-                      onSubmitExchange(item.id, [selectedItemId]);
+                      console.log('Calling onSubmitExchange with:', item.id, [selectedItemId], item.ownerId);
+                      onSubmitExchange(item.id, [selectedItemId], item.ownerId);
                       setSelectedItemId("");
                       setShowExchange(false);
                     } else {

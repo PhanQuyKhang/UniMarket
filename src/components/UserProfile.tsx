@@ -15,9 +15,9 @@ interface UserProfileProps {
   userItems: Item[];
   exchangeRequests?: ExchangeRequest[];
   onCompleteExchange?: (requestId: string) => void;
-  user?: { 
-    name: string; 
-    email: string; 
+  user?: {
+    name: string;
+    email: string;
     avatar?: string;
     phone?: string;
     facebook?: string;
@@ -45,7 +45,7 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 w-full">
-      {/* Profile Header */}  
+      {/* Profile Header */}
       <Card className="mb-8 w-full">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -53,16 +53,16 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
               {user && user.avatar ? (
                 <AvatarImage src={user.avatar} />
               ) : (
-                <AvatarFallback>{user && user.name ? user.name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase() : 'YU'}</AvatarFallback>
+                <AvatarFallback>{user && user.name ? user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'YU'}</AvatarFallback>
               )}
             </Avatar>
-            
+
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-bold">{user?.name || 'Your Profile'}</h1>
                   <p className="text-muted-foreground text-sm mt-1">{user?.email}</p>
-                  
+
                   {/* Contact Details */}
                   {(user?.phone || user?.facebook || user?.instagram || user?.twitter || user?.linkedin) && (
                     <div className="mt-3">
@@ -101,13 +101,13 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center gap-1 mt-3">
                     <span className="text-sm">⭐ {stats.averageRating}</span>
                     <span className="text-xs text-muted-foreground">(Based on {Math.floor(Math.random() * 20) + 5} reviews)</span>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
                     <Edit3 className="h-4 w-4 mr-2" />
@@ -270,7 +270,7 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Basic Information</h3>
-              
+
               <div>
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -288,7 +288,7 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Contact Details</h3>
               <p className="text-sm text-muted-foreground">These details are optional and will be visible to other users</p>
-              
+
               <div>
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -349,9 +349,9 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
               <Button type="submit" className="flex-1">
                 Save Changes
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowEditModal(false)}
                 className="flex-1"
               >

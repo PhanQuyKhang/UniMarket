@@ -58,13 +58,13 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
 
   const handleImageUpload = (files: FileList | null) => {
     if (!files) return;
-    
+
     // In a real app, you would upload these files to a server
     // For now, we'll create mock URLs
-    const newImages = Array.from(files).map((file, index) => 
+    const newImages = Array.from(files).map((file, index) =>
       `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&crop=center&auto=format&q=60&index=${index}`
     );
-    
+
     setFormData(prev => ({
       ...prev,
       images: [...prev.images, ...newImages].slice(0, 5) // Max 5 images
@@ -80,7 +80,7 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.category || !formData.condition) {
       alert('Please fill in all required fields');
       return;
@@ -109,23 +109,22 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
         <CardHeader>
           <CardTitle>{existingItem ? 'Edit Item' : 'Add Item for Exchange'}</CardTitle>
           <p className="text-muted-foreground">
-            {existingItem 
+            {existingItem
               ? 'Update your item details below.'
               : 'Add your item to the exchange marketplace and find others to trade with.'
             }
           </p>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Images Upload */}
             <div className="space-y-4">
               <Label>Photos (up to 5)</Label>
-              
+
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-                }`}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                  }`}
                 onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
                 onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
                 onDragOver={(e) => e.preventDefault()}
@@ -257,9 +256,9 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
                 Cancel
               </Button>
               {existingItem && onDelete && (
-                <Button 
-                  type="button" 
-                  variant="destructive" 
+                <Button
+                  type="button"
+                  variant="destructive"
                   onClick={handleDelete}
                   className="px-4"
                 >

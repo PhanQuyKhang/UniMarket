@@ -13,14 +13,15 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   isLoggedIn: boolean;
   user: { name: string; email: string; avatar: string } | null;
+  isAdmin?: boolean;
 }
 
-export function Header({ currentPage, onNavigate, onProfileClick, onLogout, searchQuery, onSearchChange, isLoggedIn, user }: HeaderProps) {
+export function Header({ currentPage, onNavigate, onProfileClick, onLogout, searchQuery, onSearchChange, isLoggedIn, user, isAdmin }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-blue-100 backdrop-blur supports-[backdrop-filter]:bg-blue-100/90">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <div 
+        <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => onNavigate('home')}
         >
@@ -44,56 +45,69 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
         {/* Navigation - removed My Items per request */}
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          <Button 
-            onClick={() => onNavigate('sell')}
-            className="hidden sm:flex"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
-          {isLoggedIn && user ? (
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => onNavigate('exchanges')}
+        {isLoggedIn && user ? (
+          <div className="flex items-center gap-2">
+            {isAdmin ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onNavigate('admin')}
                 className="hidden sm:flex items-center gap-2"
-                title="Exchange Requests"
               >
-                <ArrowLeftRight className="h-4 w-4" />
-                <span className="hidden lg:inline">Exchanges</span>
+                <span className="font-semibold">Admin Dashboard</span>
               </Button>
-              
-              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={onProfileClick}>
-                <img
-                  src={user.avatar}
-                  alt={`${user.name} avatar`}
-                  className="h-6 w-6 rounded-full"
-                />
-                <span className="hidden sm:inline text-sm">{user.name}</span>
-              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={() => onNavigate('sell')}
+                  className="hidden sm:flex"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('exchange-requests')}
+                  className="hidden sm:flex items-center gap-2"
+                  title="Exchange Requests"
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                  <span className="hidden lg:inline">Exchanges</span>
+                </Button>
+              </>
+            )}
 
-              <Button variant="ghost" size="sm" onClick={onLogout} title="Logout">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              variant="ghost" 
+            <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={onProfileClick}>
+              <img
+                src={user.avatar}
+                alt={`${user.name} avatar`}
+                className="h-6 w-6 rounded-full"
+              />
+              <span className="hidden sm:inline text-sm">{user.name}</span>
+            </Button>
+
+            <Button variant="ghost" size="sm" onClick={onLogout} title="Logout">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
               size="sm"
               onClick={onProfileClick}
             >
               <User className="h-4 w-4" />
             </Button>
-          )}
-          
-          {/* Mobile Menu */}
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </div>
+          </div>
+        )}
+
+        {/* Mobile Menu */}
+        <Button variant="ghost" size="sm" className="md:hidden">
+          <Menu className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Mobile Search Bar */}

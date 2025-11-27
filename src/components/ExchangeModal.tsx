@@ -6,14 +6,14 @@ interface ExchangeModalProps {
   onClose: () => void;
   targetItem: Item;
   userItems: Item[];
-  onSubmitExchange: (targetItemId: string, selectedItemIds: string[]) => void;
+  onSubmitExchange: (targetItemId: string, selectedItemIds: string[], targetItemOwnerId: string) => void;
 }
 
 export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmitExchange }: ExchangeModalProps) {
   const [selectedItemId, setSelectedItemId] = useState<string>("");
 
   console.log('ExchangeModal rendered with:', { isOpen, targetItem: targetItem?.title, userItemsCount: userItems.length });
-  
+
   // Safety check to prevent crashes if targetItem is missing
   if (!targetItem) {
     console.error('ExchangeModal: targetItem is missing');
@@ -21,7 +21,7 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
   }
 
   if (!isOpen) return null;
-  
+
   const availableUserItems = userItems.filter(item => item.status === 'available');
   console.log('Available user items for exchange:', availableUserItems.length, availableUserItems);
 
@@ -34,7 +34,7 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
       alert('Please select one item to exchange');
       return;
     }
-    onSubmitExchange(targetItem.id, [selectedItemId]);
+    onSubmitExchange(targetItem.id, [selectedItemId], targetItem.ownerId);
     setSelectedItemId("");
     onClose();
   };
@@ -50,7 +50,7 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold">Exchange Items - {targetItem.title}</h2>
         </div>
-        
+
         <div className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Seller's Item */}
@@ -59,8 +59,8 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
                 👤 Seller's Item
               </h3>
               <div className="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">
-                <img 
-                  src={targetItem.images[0]} 
+                <img
+                  src={targetItem.images[0]}
                   alt={targetItem.title}
                   className="w-full h-32 object-cover rounded mb-3"
                 />
@@ -91,18 +91,17 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
                   <p className="text-sm font-medium mb-3">Select one item to offer:</p>
                   <div className="max-h-96 overflow-y-auto space-y-2">
                     {availableUserItems.map((item) => (
-                      <div 
-                        key={item.id} 
-                        className={`cursor-pointer border-2 rounded-lg p-3 transition-all hover:shadow-md ${
-                          selectedItemId === item.id 
-                            ? 'border-blue-500 bg-blue-50 shadow-md' 
-                            : 'border-gray-200 hover:border-blue-300'
-                        }`}
+                      <div
+                        key={item.id}
+                        className={`cursor-pointer border-2 rounded-lg p-3 transition-all hover:shadow-md ${selectedItemId === item.id
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-300'
+                          }`}
                         onClick={() => handleItemSelect(item.id)}
                       >
                         <div className="flex items-center gap-3">
-                          <img 
-                            src={item.images[0]} 
+                          <img
+                            src={item.images[0]}
                             alt={item.title}
                             className="w-16 h-16 object-cover rounded-md"
                           />
@@ -113,11 +112,10 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
                               Condition: {item.condition}
                             </p>
                           </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            selectedItemId === item.id 
-                              ? 'border-blue-500 bg-blue-500' 
-                              : 'border-gray-400'
-                          }`}>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedItemId === item.id
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-400'
+                            }`}>
                             {selectedItemId === item.id && (
                               <div className="w-2 h-2 bg-white rounded-full"></div>
                             )}
@@ -150,20 +148,19 @@ export function ExchangeModal({ isOpen, onClose, targetItem, userItems, onSubmit
             </div>
           )}
         </div>
-        
+
         <div className="p-6 border-t flex justify-end gap-3">
-          <button 
+          <button
             className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
             onClick={handleClose}
           >
             Cancel
           </button>
-          <button 
-            className={`px-4 py-2 rounded text-white ${
-              selectedItemId 
-                ? 'bg-blue-500 hover:bg-blue-600' 
-                : 'bg-gray-400 cursor-not-allowed'
-            }`}
+          <button
+            className={`px-4 py-2 rounded text-white ${selectedItemId
+              ? 'bg-blue-500 hover:bg-blue-600'
+              : 'bg-gray-400 cursor-not-allowed'
+              }`}
             onClick={handleSubmit}
             disabled={!selectedItemId}
           >

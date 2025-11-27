@@ -11,7 +11,7 @@ import { ExchangeRequest } from "../data/userDataService";
 interface ExchangeRequestsPageProps {
   exchangeRequests: ExchangeRequest[];
   allItems: Item[];
-  currentUserEmail: string;
+  currentUserId: string;
   onAcceptExchange: (requestId: string) => void;
   onRejectExchange: (requestId: string) => void;
   onBack: () => void;
@@ -20,12 +20,12 @@ interface ExchangeRequestsPageProps {
   onCancelExchange?: (requestId: string) => void;
 }
 
-export function ExchangeRequestsPage({ 
-  exchangeRequests, 
-  allItems, 
-  currentUserEmail, 
-  onAcceptExchange, 
-  onRejectExchange, 
+export function ExchangeRequestsPage({
+  exchangeRequests,
+  allItems,
+  currentUserId,
+  onAcceptExchange,
+  onRejectExchange,
   onBack,
   onItemClick,
   onCompleteExchange,
@@ -34,11 +34,27 @@ export function ExchangeRequestsPage({
   const [filter, setFilter] = useState<'incoming' | 'outgoing' | 'exchanging' | 'completed'>('incoming');
 
   // Separate incoming / outgoing and special-state requests
-  const incomingRequests = exchangeRequests.filter(req => req.targetOwnerId === currentUserEmail && req.status === 'pending');
-  const outgoingRequests = exchangeRequests.filter(req => req.requesterId === currentUserEmail && req.status === 'pending');
+  console.log('ExchangeRequestsPage Render Debug:', {
+    currentUserId,
+    totalRequests: exchangeRequests.length,
+    sampleRequest: exchangeRequests[0]
+  });
+
+  const incomingRequests = exchangeRequests.filter(req => {
+    // Debug specific mismatch
+    if (req.status === 'pending') {
+      console.log(`Checking incoming: req.targetOwnerId (${req.targetOwnerId}) === currentUserId (${currentUserId}) -> ${String(req.targetOwnerId) === String(currentUserId)}`);
+    }
+    return String(req.targetOwnerId) === String(currentUserId) && req.status === 'pending';
+  });
+  const outgoingRequests = exchangeRequests.filter(req => {
+    const match = String(req.requesterId) === String(currentUserId) && req.status === 'pending';
+    if (match) console.log('Found outgoing request:', req);
+    return match;
+  });
   // Exchanging = accepted (both sides are now in the "in-progress" exchange phase)
-  const exchangingRequests = exchangeRequests.filter(req => req.status === 'accepted' && (req.requesterId === currentUserEmail || req.targetOwnerId === currentUserEmail));
-  const completedRequests = exchangeRequests.filter(req => req.status === 'completed' && (req.requesterId === currentUserEmail || req.targetOwnerId === currentUserEmail));
+  const exchangingRequests = exchangeRequests.filter(req => req.status === 'accepted' && (String(req.requesterId) === String(currentUserId) || String(req.targetOwnerId) === String(currentUserId)));
+  const completedRequests = exchangeRequests.filter(req => req.status === 'completed' && (String(req.requesterId) === String(currentUserId) || String(req.targetOwnerId) === String(currentUserId)));
 
   const getFilteredRequests = () => {
     switch (filter) {
@@ -75,7 +91,7 @@ export function ExchangeRequestsPage({
         return 'bg-gray-100 text-gray-800';
     }
   };
- 
+
   const getStatusIcon = (status: ExchangeRequest['status']) => {
     switch (status) {
       case 'pending':
@@ -151,13 +167,13 @@ export function ExchangeRequestsPage({
             <ArrowLeftRight className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Exchange Requests</h3>
             <p className="text-muted-foreground">
-              {filter === 'incoming' 
+              {filter === 'incoming'
                 ? "You haven't received any exchange requests yet."
                 : filter === 'outgoing'
-                ? "You haven't sent any exchange requests yet."
-                : filter === 'exchanging'
-                ? "No ongoing exchanges."
-                : "No completed exchanges found."}
+                  ? "You haven't sent any exchange requests yet."
+                  : filter === 'exchanging'
+                    ? "No ongoing exchanges."
+                    : "No completed exchanges found."}
             </p>
           </CardContent>
         </Card>
@@ -166,7 +182,7 @@ export function ExchangeRequestsPage({
           {filteredRequests.map((request) => {
             const targetItem = getItemById(request.targetItemId);
             const offeredItems = request.offeredItemIds.map(id => getItemById(id)).filter(Boolean) as Item[];
-            const isIncoming = request.targetOwnerId === currentUserEmail;
+            const isIncoming = String(request.targetOwnerId) === String(currentUserId);
 
             return (
               <Card key={request.id} className="overflow-hidden w-full">
@@ -176,7 +192,7 @@ export function ExchangeRequestsPage({
                       <div className="flex items-center gap-2">
                         {getStatusIcon(request.status)}
                         <Badge className={getStatusColor(request.status)}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                          {request.status === 'accepted' ? 'Exchanging' : request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                         </Badge>
                       </div>
                       <div>
@@ -264,20 +280,20 @@ export function ExchangeRequestsPage({
                   {request.status === 'accepted' && (
                     <div className="flex gap-3 mt-6 justify-center items-center">
                       {/* If current user already confirmed, show waiting message but still allow cancel */}
-                      { (isIncoming ? request.ownerConfirmed : request.requesterConfirmed) ? (
+                      {(isIncoming ? request.ownerConfirmed : request.requesterConfirmed) ? (
                         <>
                           <div className="text-sm text-muted-foreground">Waiting for the other party to confirm...</div>
                           <Button variant="outline" onClick={() => onCancelExchange?.(request.id)}>
-                            Cancel
+                            Cancel Exchange
                           </Button>
                         </>
                       ) : (
                         <>
                           <Button variant="default" onClick={() => onCompleteExchange?.(request.id)}>
-                            Mark as Completed
+                            Confirm Exchange
                           </Button>
                           <Button variant="outline" onClick={() => onCancelExchange?.(request.id)}>
-                            Cancel
+                            Cancel Exchange
                           </Button>
                         </>
                       )}

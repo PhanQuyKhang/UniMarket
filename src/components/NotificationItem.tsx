@@ -148,7 +148,7 @@ export function NotificationItem({
             </Button>
           </div>
         </div>
-      </CardContent>    
+      </CardContent>
     </Card>
   );
 }
