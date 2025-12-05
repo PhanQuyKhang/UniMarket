@@ -18,14 +18,19 @@ interface HeaderProps {
 export function Header({ currentPage, onNavigate, onProfileClick, onLogout, searchQuery, onSearchChange, isLoggedIn, user }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-blue-100 backdrop-blur supports-[backdrop-filter]:bg-blue-100/90">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         {/* Logo */}
         <div 
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2 cursor-pointer ml-4"
           onClick={() => onNavigate('home')}
         >
-          <ShoppingBag className="h-6 w-6 text-primary" />
-          <span className="font-semibold">UniMarket</span>
+          {/* <ShoppingBag className="h-6 w-6 text-primary" />
+          <span className="font-semibold">UniMarket</span> */}
+          <img 
+            src="/logo.png" 
+            alt="UniMarket Logo" 
+            className="h-16 w-auto object-contain" 
+          />
         </div>
 
         {/* Search Bar - Hidden on mobile */}
