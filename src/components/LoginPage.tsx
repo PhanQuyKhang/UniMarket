@@ -89,6 +89,10 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          {/* Logo */}
+          <div className="flex justify-center mb-4">
+            <img src="../../public/logo.png" alt="UniMarket Logo" className="h-20 w-20" />
+          </div>
           <CardTitle className="text-2xl font-bold">Welcome to UniMarket</CardTitle>
           <CardDescription>
             Sign in to access your profile and manage your items
