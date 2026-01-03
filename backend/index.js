@@ -16,7 +16,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'https://phanquykhang.github.io'
+        'https://hiuukun.github.io'  // Your GitHub Pages domain
     ],
     credentials: true
 }));
