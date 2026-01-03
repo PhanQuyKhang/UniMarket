@@ -27,7 +27,7 @@ export function CategoryFilter({ selectedCategory, onCategoryChange, itemCounts 
           const Icon = category.icon;
           const count = itemCounts[category.id] || 0;
           const isSelected = selectedCategory === category.id;
-          
+
           return (
             <Button
               key={category.id}

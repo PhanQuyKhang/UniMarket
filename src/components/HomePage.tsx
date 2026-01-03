@@ -22,11 +22,11 @@ export function HomePage({ items, searchQuery, onItemClick, onRefresh, currentUs
   const filteredItems = items.filter(item => {
     const isAvailable = item.status === 'available';
     const isNotOwnItem = !currentUser || item.ownerId !== currentUser.email;
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-    const matchesSearch = searchQuery === '' || 
+    const matchesCategory = selectedCategory === 'all' || item.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch = searchQuery === '' ||
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return isAvailable && isNotOwnItem && matchesCategory && matchesSearch;
   });
 
@@ -46,18 +46,19 @@ export function HomePage({ items, searchQuery, onItemClick, onRefresh, currentUs
   const categoryCountsMap = items.reduce((acc, item) => {
     const isAvailable = item.status === 'available';
     const isNotOwnItem = !currentUser || item.ownerId !== currentUser.email;
-    
+
     if (isAvailable && isNotOwnItem) {
-      acc[item.category] = (acc[item.category] || 0) + 1;
+      const categoryKey = item.category.toLowerCase();
+      acc[categoryKey] = (acc[categoryKey] || 0) + 1;
       acc['all'] = (acc['all'] || 0) + 1;
     }
     return acc;
   }, {} as Record<string, number>);
 
   return (
-    <div className="flex flex-1 min-h-0">
+    <div className="flex min-h-[calc(100vh-4rem)]">
       {/* Sidebar - Categories */}
-      <div className="hidden lg:block w-64 border-r bg-muted/30 p-6">
+      <div className="hidden lg:block w-64 border-r border-blue-100 bg-blue-100 p-6">
         <CategoryFilter
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
@@ -71,12 +72,12 @@ export function HomePage({ items, searchQuery, onItemClick, onRefresh, currentUs
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2>
-              {selectedCategory === 'all' ? 'All Items' : 
-               selectedCategory === 'books' ? 'Books & Textbooks' :
-               selectedCategory === 'clothing' ? 'Clothing' :
-               selectedCategory === 'electronics' ? 'Electronics' :
-               selectedCategory === 'furniture' ? 'Furniture' :
-               selectedCategory === 'gaming' ? 'Gaming' : 'Other Items'}
+              {selectedCategory === 'all' ? 'All Items' :
+                selectedCategory === 'books' ? 'Books & Textbooks' :
+                  selectedCategory === 'clothing' ? 'Clothing' :
+                    selectedCategory === 'electronics' ? 'Electronics' :
+                      selectedCategory === 'furniture' ? 'Furniture' :
+                        selectedCategory === 'gaming' ? 'Gaming' : 'Other Items'}
             </h2>
             <p className="text-muted-foreground">
               {sortedItems.length} {sortedItems.length === 1 ? 'item' : 'items'} available
@@ -96,7 +97,7 @@ export function HomePage({ items, searchQuery, onItemClick, onRefresh, currentUs
                 Refresh
               </Button>
             )}
-            
+
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-40">

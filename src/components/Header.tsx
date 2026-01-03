@@ -18,14 +18,14 @@ interface HeaderProps {
 
 export function Header({ currentPage, onNavigate, onProfileClick, onLogout, searchQuery, onSearchChange, isLoggedIn, user, isAdmin }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-blue-100 backdrop-blur supports-[backdrop-filter]:bg-blue-100/90">
+    <header className="sticky top-0 z-50 w-full border-b border-blue-600 bg-primary text-primary-foreground shadow-md">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => onNavigate('home')}
         >
-          <ShoppingBag className="h-6 w-6 text-primary" />
+          <ShoppingBag className="h-6 w-6 text-primary-foreground" />
           <span className="font-semibold">UniMarket</span>
         </div>
 
@@ -37,7 +37,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
               placeholder="Search items..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-input-background"
+              className="pl-10 bg-white/95 border-2 border-white text-black placeholder:text-gray-500 focus-visible:ring-white/50"
             />
           </div>
         </div>
@@ -52,7 +52,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigate('admin')}
-                className="hidden sm:flex items-center gap-2"
+                className="hidden sm:flex items-center gap-2 text-primary-foreground hover:bg-white/10 hover:text-white"
               >
                 <span className="font-semibold">Admin Dashboard</span>
               </Button>
@@ -60,7 +60,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
               <>
                 <Button
                   onClick={() => onNavigate('sell')}
-                  className="hidden sm:flex"
+                  className="hidden sm:flex bg-blue-400 text-white hover:bg-blue-500 border-2 border-white"
                   size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -70,7 +70,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
                   variant="ghost"
                   size="sm"
                   onClick={() => onNavigate('exchange-requests')}
-                  className="hidden sm:flex items-center gap-2"
+                  className="hidden sm:flex items-center gap-2 text-primary-foreground hover:bg-white/10 hover:text-white"
                   title="Exchange Requests"
                 >
                   <ArrowLeftRight className="h-4 w-4" />
@@ -79,16 +79,16 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
               </>
             )}
 
-            <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={onProfileClick}>
+            <Button variant="ghost" size="sm" className="flex items-center gap-2 text-primary-foreground hover:bg-white/10 hover:text-white" onClick={onProfileClick}>
               <img
                 src={user.avatar}
                 alt={`${user.name} avatar`}
-                className="h-6 w-6 rounded-full"
+                className="h-6 w-6 rounded-full border-2 border-white/20"
               />
-              <span className="hidden sm:inline text-sm">{user.name}</span>
+              <span className="hidden sm:inline text-sm font-medium">{user.name}</span>
             </Button>
 
-            <Button variant="ghost" size="sm" onClick={onLogout} title="Logout">
+            <Button variant="ghost" size="sm" onClick={onLogout} title="Logout" className="text-primary-foreground hover:bg-white/10 hover:text-white">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -98,6 +98,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
               variant="ghost"
               size="sm"
               onClick={onProfileClick}
+              className="text-primary-foreground hover:bg-white/10 hover:text-white"
             >
               <User className="h-4 w-4" />
             </Button>
@@ -105,7 +106,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
         )}
 
         {/* Mobile Menu */}
-        <Button variant="ghost" size="sm" className="md:hidden">
+        <Button variant="ghost" size="sm" className="md:hidden text-primary-foreground hover:bg-white/10 hover:text-white">
           <Menu className="h-4 w-4" />
         </Button>
       </div>
