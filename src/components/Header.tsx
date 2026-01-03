@@ -25,8 +25,8 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => onNavigate('home')}
         >
-          <ShoppingBag className="h-6 w-6 text-primary-foreground" />
-          <span className="font-semibold">UniMarket</span>
+          <img src="../../public/logo.png" alt="UniMarket Logo" className="h-16 w-16" />
+          <span className="font-semibold text-lg">UniMarket</span>
         </div>
 
         {/* Search Bar - Hidden on mobile */}
