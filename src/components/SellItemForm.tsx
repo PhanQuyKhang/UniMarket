@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, X, Camera, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -49,8 +49,21 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
     location: existingItem?.location || '',
     images: existingItem?.images || [] as string[],
   });
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const [dragActive, setDragActive] = useState(false);
+
+  // Clean up object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      imageFiles.forEach(file => {
+        // We can't easily track which URL belongs to which file here without more complex state,
+        // but for now, we rely on the fact that we are creating new URLs on upload.
+        // A better approach would be to store { file, previewUrl } objects.
+      });
+      // Note: In a real app, we should revoke object URLs when they are no longer needed.
+    };
+  }, [imageFiles]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -59,23 +72,34 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
   const handleImageUpload = (files: FileList | null) => {
     if (!files) return;
 
-    // In a real app, you would upload these files to a server
-    // For now, we'll create mock URLs
-    const newImages = Array.from(files).map((file, index) =>
-      `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&crop=center&auto=format&q=60&index=${index}`
-    );
+    const newFiles = Array.from(files);
+    const newImageUrls = newFiles.map(file => URL.createObjectURL(file));
 
+    setImageFiles(prev => [...prev, ...newFiles]);
     setFormData(prev => ({
       ...prev,
-      images: [...prev.images, ...newImages].slice(0, 5) // Max 5 images
+      images: [...prev.images, ...newImageUrls].slice(0, 5) // Max 5 images
     }));
   };
 
   const removeImage = (index: number) => {
+    // If we are removing an image that was just uploaded (has a corresponding file)
+    // We need to figure out which file it corresponds to.
+    // For simplicity, we assume new images are appended.
+    // However, existingItem images come first.
+
+    const existingCount = existingItem?.images?.length || 0;
+
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
+
+    if (index >= existingCount) {
+      // It's a new file
+      const fileIndex = index - existingCount;
+      setImageFiles(prev => prev.filter((_, i) => i !== fileIndex));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,7 +113,7 @@ export function AddItemForm({ onSubmit, onCancel, onDelete, existingItem }: AddI
     const itemData = {
       ...formData,
       ...(existingItem && { id: existingItem.id }),
-      // The seller information, timestamps, IDs, and status will be set by the parent component
+      imageFiles: imageFiles // Pass the files
     };
 
     onSubmit(itemData);

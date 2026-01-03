@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 const port = 5000;
@@ -20,6 +22,29 @@ app.get('/', (req, res) => {
     res.send('Hello from the backend!');
 });
 
+// GET image by ID
+app.get('/api/images/:id', async (req, res) => {
+    let client;
+    try {
+        const { id } = req.params;
+        client = await pool.connect();
+        const result = await client.query('SELECT content_type, data FROM ItemImage WHERE image_id = $1', [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send('Image not found');
+        }
+
+        const image = result.rows[0];
+        res.setHeader('Content-Type', image.content_type);
+        res.send(image.data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error fetching image');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 const itemQuery = `
   SELECT 
     i.item_id AS id,
@@ -27,6 +52,7 @@ const itemQuery = `
     i.description,
     i.condition,
     i.status,
+    i.price,
     i.created_at AS "timePosted",
     c.name AS category,
     u.full_name AS seller_name,
@@ -34,7 +60,7 @@ const itemQuery = `
     u.contact_link AS location,
     u.user_id AS "ownerId",
     COALESCE(s.reputation, 0) AS seller_rating,
-    (SELECT array_agg(ii.image_url) FROM ItemImage ii WHERE ii.item_id = i.item_id) AS images
+    (SELECT array_agg(ii.image_id) FROM ItemImage ii WHERE ii.item_id = i.item_id) AS image_ids
   FROM Item i
   LEFT JOIN Category c ON i.category_id = c.category_id
   LEFT JOIN "User" u ON i.user_id = u.user_id
@@ -55,7 +81,8 @@ app.get('/api/items', async (req, res) => {
             location: row.location,
             category: row.category,
             condition: row.condition,
-            images: row.images || [],
+            price: parseFloat(row.price),
+            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -91,7 +118,8 @@ app.get('/api/items/:id', async (req, res) => {
             location: row.location,
             category: row.category,
             condition: row.condition,
-            images: row.images || [],
+            price: parseFloat(row.price),
+            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -169,7 +197,8 @@ app.get('/api/users/:userId/items', async (req, res) => {
             location: row.location,
             category: row.category,
             condition: row.condition,
-            images: row.images || [],
+            price: parseFloat(row.price),
+            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -279,10 +308,12 @@ app.post('/api/users', async (req, res) => {
 });
 
 // POST create item
-app.post('/api/items', async (req, res) => {
+app.post('/api/items', upload.array('images'), async (req, res) => {
     let client;
     try {
-        const { userId, category, title, description, condition, images, location } = req.body;
+        const { userId, category, title, description, condition, location, price } = req.body;
+        const files = req.files;
+
         client = await pool.connect();
 
         // Start transaction
@@ -291,15 +322,11 @@ app.post('/api/items', async (req, res) => {
         // Handle Category: Look up or Create
         let categoryIdToUse = null;
         if (category) {
-            // Try to find existing category
-            // We'll map the frontend values (e.g. 'books') to display names if needed, 
-            // or just use the value as the name for simplicity.
             const catResult = await client.query('SELECT category_id FROM Category WHERE name = $1', [category]);
 
             if (catResult.rows.length > 0) {
                 categoryIdToUse = catResult.rows[0].category_id;
             } else {
-                // Create new category
                 const newCatResult = await client.query(
                     'INSERT INTO Category (name, description) VALUES ($1, $2) RETURNING category_id',
                     [category, 'Auto-generated category']
@@ -311,19 +338,19 @@ app.post('/api/items', async (req, res) => {
         // Insert item
         const itemResult = await client.query(`
       INSERT INTO Item (user_id, category_id, title, description, condition, status, price)
-      VALUES ($1, $2, $3, $4, $5, 'available', 0)
+      VALUES ($1, $2, $3, $4, $5, 'available', $6)
       RETURNING item_id, created_at
-    `, [userId, categoryIdToUse, title, description, condition]);
+    `, [userId, categoryIdToUse, title, description, condition, price || 0]);
 
         const itemId = itemResult.rows[0].item_id;
 
         // Insert images
-        if (images && images.length > 0) {
-            for (const imageUrl of images) {
+        if (files && files.length > 0) {
+            for (const file of files) {
                 await client.query(`
-          INSERT INTO ItemImage (item_id, image_url)
-          VALUES ($1, $2)
-        `, [itemId, imageUrl]);
+          INSERT INTO ItemImage (item_id, filename, content_type, data)
+          VALUES ($1, $2, $3, $4)
+        `, [itemId, file.originalname, file.mimetype, file.buffer]);
             }
         }
 
@@ -345,7 +372,8 @@ app.post('/api/items', async (req, res) => {
             location: row.location,
             category: row.category,
             condition: row.condition,
-            images: row.images || [],
+            price: parseFloat(row.price),
+            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -358,6 +386,7 @@ app.post('/api/items', async (req, res) => {
         res.status(201).json(item);
     } catch (err) {
         await client.query('ROLLBACK');
+        console.error(err);
         res.status(500).json({ error: err.message });
     } finally {
         if (client) client.release();
@@ -365,11 +394,13 @@ app.post('/api/items', async (req, res) => {
 });
 
 // PUT update item
-app.put('/api/items/:id', async (req, res) => {
+app.put('/api/items/:id', upload.array('images'), async (req, res) => {
     let client;
     try {
         const { id } = req.params;
-        const { title, description, condition, status, images, category } = req.body;
+        const { title, description, condition, status, category, price } = req.body;
+        const files = req.files;
+
         client = await pool.connect();
 
         await client.query('BEGIN');
@@ -398,17 +429,21 @@ app.put('/api/items/:id', async (req, res) => {
           condition = COALESCE($3, condition),
           status = COALESCE($4, status),
           category_id = COALESCE($5, category_id),
+          price = COALESCE($6, price),
           updated_at = CURRENT_TIMESTAMP
-      WHERE item_id = $6
-    `, [title, description, condition, status, categoryIdToUse, id]);
+      WHERE item_id = $7
+    `, [title, description, condition, status, categoryIdToUse, price, id]);
 
         // Update images if provided
-        if (images) {
+        if (files && files.length > 0) {
             // Delete existing images
             await client.query('DELETE FROM ItemImage WHERE item_id = $1', [id]);
             // Insert new images
-            for (const imageUrl of images) {
-                await client.query('INSERT INTO ItemImage (item_id, image_url) VALUES ($1, $2)', [id, imageUrl]);
+            for (const file of files) {
+                await client.query(`
+          INSERT INTO ItemImage (item_id, filename, content_type, data)
+          VALUES ($1, $2, $3, $4)
+        `, [id, file.originalname, file.mimetype, file.buffer]);
             }
         }
 
@@ -421,27 +456,27 @@ app.put('/api/items/:id', async (req, res) => {
         }
         const row = result.rows[0];
         const item = {
-            id: row.id,
+            id: row.id.toString(),
             title: row.title,
-            title: row.title,
-            description: row.description,
             description: row.description,
             timePosted: row.timePosted,
             location: row.location,
             category: row.category,
             condition: row.condition,
-            images: row.images || [],
+            price: parseFloat(row.price),
+            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
                 rating: parseFloat(row.seller_rating),
             },
             status: row.status,
-            ownerId: row.ownerId,
+            ownerId: row.ownerId.toString(),
         };
         res.json(item);
     } catch (err) {
         await client.query('ROLLBACK');
+        console.error(err);
         res.status(500).json({ error: err.message });
     } finally {
         if (client) client.release();

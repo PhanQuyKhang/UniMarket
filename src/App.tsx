@@ -317,11 +317,25 @@ function AppContent() {
       return;
     }
     try {
-      await api.createItem({
-        ...itemData,
-        userId: user.id,
-        // categoryId is no longer needed, backend handles 'category' string from itemData
+      const formData = new FormData();
+      formData.append('userId', user.id);
+
+      // Append all other fields
+      Object.keys(itemData).forEach(key => {
+        if (key === 'imageFiles') {
+          if (itemData.imageFiles && itemData.imageFiles.length > 0) {
+            itemData.imageFiles.forEach((file: File) => {
+              formData.append('images', file);
+            });
+          }
+        } else if (key === 'images') {
+          // Skip the 'images' array of strings (URLs) as we are sending files
+        } else {
+          formData.append(key, itemData[key]);
+        }
       });
+
+      await api.createItem(formData);
 
       await refreshAllUserData();
       setCurrentPage('profile');
@@ -348,7 +362,25 @@ function AppContent() {
     }
 
     try {
-      await api.updateItem(editingItem.id, itemData);
+      const formData = new FormData();
+
+      Object.keys(itemData).forEach(key => {
+        if (key === 'imageFiles') {
+          if (itemData.imageFiles && itemData.imageFiles.length > 0) {
+            itemData.imageFiles.forEach((file: File) => {
+              formData.append('images', file);
+            });
+          }
+        } else if (key === 'images') {
+          // Skip existing image URLs if we are uploading new files
+          // If we want to keep existing images, the backend logic needs to be different.
+          // Currently backend replaces all images if any file is uploaded.
+        } else {
+          formData.append(key, itemData[key]);
+        }
+      });
+
+      await api.updateItem(editingItem.id, formData);
       await refreshAllUserData();
       setEditingItem(null);
       setCurrentPage('profile');

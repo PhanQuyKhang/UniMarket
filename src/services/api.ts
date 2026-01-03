@@ -18,10 +18,14 @@ export const api = {
     },
 
     createItem: async (itemData: any): Promise<Item> => {
+        const isFormData = itemData instanceof FormData;
+        const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+        const body = isFormData ? itemData : JSON.stringify(itemData);
+
         const response = await fetch(`${API_URL}/items`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(itemData),
+            headers: headers as HeadersInit,
+            body: body,
             cache: 'no-store'
         });
         if (!response.ok) throw new Error('Failed to create item');
@@ -29,10 +33,14 @@ export const api = {
     },
 
     updateItem: async (id: string, itemData: any): Promise<Item> => {
+        const isFormData = itemData instanceof FormData;
+        const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+        const body = isFormData ? itemData : JSON.stringify(itemData);
+
         const response = await fetch(`${API_URL}/items/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(itemData),
+            headers: headers as HeadersInit,
+            body: body,
             cache: 'no-store'
         });
         if (!response.ok) throw new Error('Failed to update item');
