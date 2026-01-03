@@ -1,12 +1,16 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const config = require('./config/config');
 const pool = require('./config/database');
 const routes = require('./routes');
 
 const app = express();
 const port = config.server.port;
+
+// Configure multer for file uploads (storing in memory for database insertion)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
 app.use(cors());
