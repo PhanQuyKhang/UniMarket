@@ -3,19 +3,19 @@
 :root {
   --font-size: 16px;
   --background: #ffffff;
-  --foreground: #1e3a8a;
+  --foreground: #4b6f4d;
   --card: #ffffff;
-  --card-foreground: #1e3a8a;
+  --card-foreground: #4b6f4d;
   --popover: #ffffff;
-  --popover-foreground: #1e3a8a;
-  --primary: #3b82f6;
+  --popover-foreground: #4b6f4d;
+  --primary: #4b6f4d;
   --primary-foreground: #ffffff;
   --secondary: #dbeafe;
-  --secondary-foreground: #1e3a8a;
+  --secondary-foreground: #4b6f4d;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
   --accent: #bfdbfe;
-  --accent-foreground: #1e3a8a;
+  --accent-foreground: #4b6f4d;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
@@ -32,11 +32,11 @@
   --chart-5: #93c5fd;
   --radius: 0.625rem;
   --sidebar: #f8fafc;
-  --sidebar-foreground: #1e3a8a;
+  --sidebar-foreground: #4b6f4d;
   --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #dbeafe;
-  --sidebar-accent-foreground: #1e3a8a;
+  --sidebar-accent-foreground: #4b6f4d;
   --sidebar-border: #e2e8f0;
   --sidebar-ring: #3b82f6;
 }

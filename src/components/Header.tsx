@@ -37,7 +37,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
               placeholder="Search items..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-white/95 border-2 border-white text-black placeholder:text-gray-500 focus-visible:ring-white/50"
+              className="pl-10 bg-white/95 border-2 border-black text-black placeholder:text-gray-500 focus-visible:ring-white/50"
             />
           </div>
         </div>
