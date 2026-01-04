@@ -601,13 +601,25 @@ function AppContent() {
     if (!user) return;
     try {
       const updatedUser = await api.updateProfile(user.id, profileData);
-      setUser(prev => prev ? ({ ...prev, ...profileData, name: updatedUser.name }) : null);
 
-      // Also update localStorage
+      // Merge current user, form data, and backend response
+      // Backend returns full_name, we use name in frontend
+      const newUserData = {
+        ...user,
+        ...profileData,
+        name: updatedUser.name || updatedUser.full_name || profileData.name
+      };
+
+      setUser(newUserData);
+
+      // Update localStorage with complete user data
       const storedUser = localStorage.getItem('uniMarketUser');
       if (storedUser) {
         const parsed = JSON.parse(storedUser);
-        localStorage.setItem('uniMarketUser', JSON.stringify({ ...parsed, name: updatedUser.name }));
+        localStorage.setItem('uniMarketUser', JSON.stringify({
+          ...parsed,
+          ...newUserData
+        }));
       }
 
       await refreshAllUserData();

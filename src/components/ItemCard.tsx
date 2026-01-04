@@ -4,6 +4,19 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
+export function formatLocation(location: string) {
+  if (!location) return 'Unknown';
+  try {
+    if (location.trim().startsWith('{')) {
+      const parsed = JSON.parse(location);
+      return parsed.phone || 'See Profile';
+    }
+    return location;
+  } catch (e) {
+    return location;
+  }
+}
+
 export interface Item {
   id: string;
   title: string;
@@ -67,7 +80,7 @@ export function ItemCard({ item, onItemClick }: ItemCardProps) {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              <span>{item.location}</span>
+              <span>{formatLocation(item.location)}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

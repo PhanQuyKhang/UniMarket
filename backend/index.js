@@ -61,7 +61,8 @@ const itemQuery = `
     c.name AS category,
     u.full_name AS seller_name,
     u.avatar_url AS seller_avatar,
-    u.contact_link AS location,
+    u.contact_link AS user_contact_link,
+    COALESCE(i.location, u.contact_link) AS location,
     u.user_id AS "ownerId",
     COALESCE(s.reputation, 0) AS seller_rating,
     (SELECT array_agg(ii.image_id) FROM ItemImage ii WHERE ii.item_id = i.item_id) AS image_ids
@@ -502,10 +503,10 @@ app.post('/api/items', upload.array('images'), async (req, res) => {
 
         // Insert item
         const itemResult = await client.query(`
-      INSERT INTO Item (user_id, category_id, title, description, condition, status, price)
-      VALUES ($1, $2, $3, $4, $5, 'available', $6)
+      INSERT INTO Item (user_id, category_id, title, description, condition, status, price, location)
+      VALUES ($1, $2, $3, $4, $5, 'available', $6, $7)
       RETURNING item_id, created_at
-    `, [userId, categoryIdToUse, title, description, condition, price || 0]);
+    `, [userId, categoryIdToUse, title, description, condition, price || 0, location || '']);
 
         const itemId = itemResult.rows[0].item_id;
 
@@ -519,10 +520,7 @@ app.post('/api/items', upload.array('images'), async (req, res) => {
             }
         }
 
-        // Update user contact_link if location provided
-        if (location) {
-            await client.query('UPDATE "User" SET contact_link = $1 WHERE user_id = $2', [location, userId]);
-        }
+        // Item location is now stored in Item table, separate from User profile
 
         await client.query('COMMIT');
 
@@ -563,7 +561,7 @@ app.put('/api/items/:id', upload.array('images'), async (req, res) => {
     let client;
     try {
         const { id } = req.params;
-        const { title, description, condition, status, category, price } = req.body;
+        const { title, description, condition, status, category, price, location } = req.body;
         const files = req.files;
 
         client = await pool.connect();
@@ -595,9 +593,10 @@ app.put('/api/items/:id', upload.array('images'), async (req, res) => {
           status = COALESCE($4, status),
           category_id = COALESCE($5, category_id),
           price = COALESCE($6, price),
+          location = COALESCE($8, location),
           updated_at = CURRENT_TIMESTAMP
       WHERE item_id = $7
-    `, [title, description, condition, status, categoryIdToUse, price, id]);
+    `, [title, description, condition, status, categoryIdToUse, price, id, location]);
 
         // Update images if provided
         if (files && files.length > 0) {
@@ -958,6 +957,26 @@ app.put('/api/exchange-requests/:id', async (req, res) => {
         if (client) client.release();
     }
 });
+
+// Auto-migration to support Item.location
+(async () => {
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query("ALTER TABLE Item ADD COLUMN IF NOT EXISTS location VARCHAR(255)");
+        await client.query(`
+            UPDATE Item i
+            SET location = u.contact_link
+            FROM "User" u
+            WHERE i.user_id = u.user_id AND i.location IS NULL
+        `);
+        console.log('Database migration confirmed: Item.location exists.');
+    } catch (e) {
+        console.error('Migration error:', e);
+    } finally {
+        if (client) client.release();
+    }
+})();
 
 app.listen(port, () => {
     console.log(`Backend server listening at http://localhost:${port}`);

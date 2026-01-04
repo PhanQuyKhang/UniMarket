@@ -5,7 +5,7 @@ import { Card, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Item } from "./ItemCard";
+import { Item, formatLocation } from "./ItemCard";
 import { ExchangeRequest } from "../data/userDataService";
 import { useState, useRef } from "react";
 
@@ -80,7 +80,7 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
               <div className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
-                <span>{item.location}</span>
+                <span>{formatLocation(item.location)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
