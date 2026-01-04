@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import logoImg from "/logo.png";
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { toast } from 'sonner';
 
 interface LoginPageProps {
   onGoogleLogin: (credentialResponse: any) => void;
@@ -12,6 +15,9 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: LoginPageProps) {
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+
   // Use the hook to open a popup OAuth flow; we'll request an access token and then fetch profile
   const loginWithChooser = useGoogleLogin({
     flow: 'implicit',
@@ -86,6 +92,18 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
     window.addEventListener('message', handler);
   };
 
+  const handleAdminLogin = () => {
+    if (adminPassword === 'admin@123') {
+      setShowAdminPassword(false);
+      setAdminPassword('');
+      if (onAdminLogin) {
+        onAdminLogin();
+      }
+    } else {
+      toast.error('Incorrect password!');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -112,14 +130,55 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
           </div>
 
           {/* Demo admin login for testing */}
-          {onAdminLogin && (
+          {onAdminLogin && !showAdminPassword && (
             <Button
               variant="destructive"
-              onClick={onAdminLogin}
+              onClick={() => setShowAdminPassword(true)}
               className="w-full"
             >
               Admin Login (demo)
             </Button>
+          )}
+
+          {/* Admin password input */}
+          {showAdminPassword && (
+            <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+              <div className="space-y-2">
+                <Label htmlFor="admin-password">Admin Password</Label>
+                <Input
+                  id="admin-password"
+                  type="password"
+                  placeholder="Enter admin password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAdminLogin();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleAdminLogin}
+                  className="flex-1"
+                  variant="destructive"
+                >
+                  Login as Admin
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowAdminPassword(false);
+                    setAdminPassword('');
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
           )}
 
           {onTestLogin && (
