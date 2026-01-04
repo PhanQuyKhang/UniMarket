@@ -2,6 +2,7 @@ import React from 'react';
 import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import logoImg from "/logo.png";
 
 interface LoginPageProps {
   onGoogleLogin: (credentialResponse: any) => void;
@@ -91,7 +92,7 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
         <CardHeader className="text-center">
           {/* Logo */}
           <div className="flex justify-center mb-4">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="UniMarket Logo" className="h-20 w-20" />
+            <img src={logoImg} alt="UniMarket Logo" className="h-20 w-20" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome to UniMarket</CardTitle>
           <CardDescription>
