@@ -168,7 +168,7 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
                   <Button
                     variant="outline"
                     size="sm"
-                    className="absolute top-2 right-12 bg-white/80 hover:bg-white"
+                    className="absolute top-2 right-2 bg-white/80 hover:bg-white"
                     disabled={item.status === 'exchanged'}
                     onClick={(e) => {
                       e.stopPropagation();

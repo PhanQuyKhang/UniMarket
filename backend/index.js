@@ -494,15 +494,44 @@ app.delete('/api/items/:id', async (req, res) => {
         const { id } = req.params;
         client = await pool.connect();
 
+        await client.query('BEGIN');
+
+        // Cancel all exchange requests involving this item
+        await client.query(`
+            UPDATE ExchangeRequest 
+            SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            WHERE (sender_item_id = $1 OR receiver_item_id = $1) 
+            AND status NOT IN ('completed', 'rejected', 'cancelled')
+        `, [id]);
+
+        // Revert status of other items in affected exchanges back to 'available'
+        const affectedExchanges = await client.query(`
+            SELECT sender_item_id, receiver_item_id 
+            FROM ExchangeRequest 
+            WHERE (sender_item_id = $1 OR receiver_item_id = $1)
+        `, [id]);
+
+        for (const exchange of affectedExchanges.rows) {
+            const otherItemId = exchange.sender_item_id == id ? exchange.receiver_item_id : exchange.sender_item_id;
+            await client.query(`
+                UPDATE Item SET status = 'available' 
+                WHERE item_id = $1 AND status IN ('pending_offer', 'exchanging')
+            `, [otherItemId]);
+        }
+
         // Delete item (cascade will handle images and related data)
         const result = await client.query('DELETE FROM Item WHERE item_id = $1 RETURNING item_id', [id]);
 
         if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ message: 'Item not found' });
         }
 
+        await client.query('COMMIT');
         res.json({ message: 'Item deleted successfully' });
     } catch (err) {
+        if (client) await client.query('ROLLBACK');
+        console.error('Error deleting item:', err);
         res.status(500).json({ error: err.message });
     } finally {
         if (client) client.release();

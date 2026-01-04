@@ -43,6 +43,7 @@ function AppContent() {
   const [showExchangeModal, setShowExchangeModal] = useState(false);
   const [selectedExchangeItem, setSelectedExchangeItem] = useState<Item | null>(null);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -316,7 +317,11 @@ function AppContent() {
       toast.error('You must be logged in to add items');
       return;
     }
+    if (isSubmitting) {
+      return; // Prevent duplicate submissions
+    }
     try {
+      setIsSubmitting(true);
       const formData = new FormData();
       formData.append('userId', user.id);
 
@@ -343,6 +348,8 @@ function AppContent() {
     } catch (error) {
       console.error('Failed to create item:', error);
       toast.error('Failed to list item');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -360,8 +367,12 @@ function AppContent() {
       toast.error('Unable to update item');
       return;
     }
+    if (isSubmitting) {
+      return; // Prevent duplicate submissions
+    }
 
     try {
+      setIsSubmitting(true);
       const formData = new FormData();
 
       Object.keys(itemData).forEach(key => {
@@ -388,6 +399,8 @@ function AppContent() {
     } catch (error) {
       console.error('Failed to update item:', error);
       toast.error('Failed to update item');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -397,6 +410,11 @@ function AppContent() {
     try {
       await api.deleteItem(itemId);
       await refreshAllUserData();
+
+      // Navigate back to profile after deletion
+      setEditingItem(null);
+      setCurrentPage('profile');
+
       toast.success('Item deleted successfully!');
     } catch (error) {
       console.error('Failed to delete item:', error);
