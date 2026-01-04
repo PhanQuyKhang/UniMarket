@@ -5,21 +5,21 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { 
-  Eye, 
-  EyeOff, 
-  Trash2, 
-  Flag, 
-  User, 
-  Ban, 
-  CheckCircle, 
+import {
+  Eye,
+  EyeOff,
+  Trash2,
+  Flag,
+  User,
+  Ban,
+  CheckCircle,
   XCircle,
   Search,
   AlertTriangle,
   ShieldAlert
 } from "lucide-react";
 import { Item } from "./ItemCard";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -64,6 +64,7 @@ interface AdminDashboardProps {
   onDeleteItem: (itemId: string) => void;
   onUpdateReportStatus: (reportId: string, status: Report['status'], note?: string) => void;
   onUpdateUserStatus: (userId: string, status: UserAccount['status'], reason?: string) => void;
+  onDeleteUser: (userId: string) => void;
   onItemClick: (item: Item) => void;
 }
 
@@ -75,9 +76,11 @@ export function AdminPage({
   onDeleteItem,
   onUpdateReportStatus,
   onUpdateUserStatus,
+  onDeleteUser,
   onItemClick,
 }: AdminDashboardProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [actionDialog, setActionDialog] = useState<{
@@ -92,12 +95,12 @@ export function AdminPage({
   const suspendedUsersCount = users.filter(u => u.status === 'suspended' || u.status === 'banned').length;
 
   const filteredItems = items.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    item.title.toLowerCase().includes(itemSearchQuery.toLowerCase())
   );
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
   );
 
   const handleCensorAction = (item: Item, censor: boolean) => {
@@ -105,6 +108,8 @@ export function AdminPage({
   };
 
   const handleDeleteAction = (item: Item) => {
+    console.log('Delete button clicked for item:', item.id, item.title);
+    console.log('Setting action dialog to:', { type: 'delete', data: item });
     setActionDialog({ type: 'delete', data: item });
   };
 
@@ -129,7 +134,7 @@ export function AdminPage({
     } else if (actionDialog.type === 'user' && actionDialog.data) {
       onUpdateUserStatus(actionDialog.data.user.id, actionDialog.data.status, actionNote);
     }
-    
+
     setActionDialog({ type: null });
     setActionNote('');
   };
@@ -223,8 +228,8 @@ export function AdminPage({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={itemSearchQuery}
+                  onChange={(e) => setItemSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -284,12 +289,17 @@ export function AdminPage({
                         </Button>
                       )}
                       <Button
+                        type="button"
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleDeleteAction(item)}
+                        onClick={() => {
+                          console.log('DELETE BUTTON CLICKED! Deleting item:', item.id, item.title);
+                          onDeleteItem(item.id);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      {console.log('Rendering delete button for:', item.title)}
                     </div>
                   </div>
                 ))}
@@ -399,8 +409,8 @@ export function AdminPage({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -475,6 +485,13 @@ export function AdminPage({
                           Restore
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => onDeleteUser(user.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -517,7 +534,7 @@ export function AdminPage({
               }
             </DialogDescription>
           </DialogHeader>
-          
+
           {(actionDialog.type === 'report' || actionDialog.type === 'user') && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -526,8 +543,8 @@ export function AdminPage({
                 </Label>
                 <Textarea
                   id="action-note"
-                  placeholder={actionDialog.type === 'report' 
-                    ? "Add notes about this report..." 
+                  placeholder={actionDialog.type === 'report'
+                    ? "Add notes about this report..."
                     : "Explain why this action is being taken..."}
                   value={actionNote}
                   onChange={(e) => setActionNote(e.target.value)}

@@ -44,6 +44,7 @@ function AppContent() {
   const [selectedExchangeItem, setSelectedExchangeItem] = useState<Item | null>(null);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
   // Load initial data
   useEffect(() => {
@@ -163,6 +164,16 @@ function AppContent() {
     }
   };
 
+  const loadAllUsers = async () => {
+    try {
+      const users = await api.getAllUsers();
+      setAllUsers(users);
+    } catch (error) {
+      console.error('Failed to load all users:', error);
+      toast.error('Failed to load users for admin panel');
+    }
+  };
+
   const handleNavigate = (page: string) => {
     setNavigationHistory([{ page: 'home' }, { page, item: null, userId: null, itemStack: [] }]);
     setCurrentPage(page);
@@ -171,6 +182,9 @@ function AppContent() {
     setItemNavigationStack([]);
 
     if (page === 'home') {
+      refreshItemsFromDatabase();
+    } else if (page === 'admin') {
+      loadAllUsers();
       refreshItemsFromDatabase();
     }
   };
@@ -298,8 +312,10 @@ function AppContent() {
       setUserItems(myItems);
       setExchangeRequests(requests);
 
-      setCurrentPage('admin');
-      toast.success('Logged in as Admin');
+      // Navigate to admin page (this will call loadAllUsers)
+      handleNavigate('admin');
+
+      toast.success('Logged in as admin!');
     } catch (error) {
       console.error('Admin login failed:', error);
       toast.error('Admin login failed');
@@ -411,9 +427,13 @@ function AppContent() {
       await api.deleteItem(itemId);
       await refreshAllUserData();
 
-      // Navigate back to profile after deletion
+      // Stay on current page (don't navigate away if on admin page)
       setEditingItem(null);
-      setCurrentPage('profile');
+
+      // Only navigate to profile if not on admin page
+      if (currentPage !== 'admin') {
+        setCurrentPage('profile');
+      }
 
       toast.success('Item deleted successfully!');
     } catch (error) {
@@ -421,6 +441,25 @@ function AppContent() {
       toast.error('Failed to delete item');
     }
   };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!user) return;
+
+    // Confirm deletion
+    if (!window.confirm('Are you sure you want to delete this user? This will also delete all their items and cancel all related exchanges. This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.deleteUser(userId);
+      await refreshAllUserData();
+      toast.success('User and all associated items deleted successfully!');
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      toast.error('Failed to delete user');
+    }
+  };
+
 
   const handleExchangeRequest = (itemId: string) => {
     if (!user) {
@@ -627,11 +666,12 @@ function AppContent() {
           <AdminPage
             items={items}
             reports={[]} // Placeholder for now
-            users={[]}   // Placeholder for now
+            users={allUsers}
             onCensorItem={(itemId, censored) => console.log('Censor item:', itemId, censored)}
             onDeleteItem={handleDeleteItem}
             onUpdateReportStatus={(id, status) => console.log('Update report:', id, status)}
             onUpdateUserStatus={(id, status) => console.log('Update user:', id, status)}
+            onDeleteUser={handleDeleteUser}
             onItemClick={handleItemClick}
           />
         )}

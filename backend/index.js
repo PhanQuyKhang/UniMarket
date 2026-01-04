@@ -249,6 +249,44 @@ app.get('/api/users/email/:email', async (req, res) => {
     }
 });
 
+// GET all users (for admin)
+app.get('/api/users', async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query(`
+            SELECT 
+                u.user_id AS id,
+                u.email,
+                u.full_name AS name,
+                u.avatar_url AS avatar,
+                u.join_date AS "joinDate",
+                COUNT(DISTINCT i.item_id) AS "itemsListed"
+            FROM "User" u
+            LEFT JOIN Item i ON u.user_id = i.user_id
+            GROUP BY u.user_id, u.email, u.full_name, u.avatar_url, u.join_date
+            ORDER BY u.join_date DESC
+        `);
+
+        const users = result.rows.map(user => ({
+            ...user,
+            id: user.id.toString(),
+            itemsListed: parseInt(user.itemsListed) || 0,
+            status: 'active',
+            rating: 5,
+            itemsSold: 0,
+            reports: 0
+        }));
+
+        res.json(users);
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // POST create or update user
 app.post('/api/users', async (req, res) => {
     let client;
@@ -310,6 +348,80 @@ app.post('/api/users', async (req, res) => {
         if (client) client.release();
     }
 });
+
+// DELETE user (admin only)
+app.delete('/api/users/:id', async (req, res) => {
+    let client;
+    try {
+        const { id } = req.params;
+        client = await pool.connect();
+
+        await client.query('BEGIN');
+
+        // Get all items owned by this user
+        const userItems = await client.query('SELECT item_id FROM Item WHERE user_id = $1', [id]);
+        const itemIds = userItems.rows.map(row => row.item_id);
+
+        if (itemIds.length > 0) {
+            // Cancel all exchange requests involving any of the user's items
+            await client.query(`
+                UPDATE ExchangeRequest 
+                SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+                WHERE (sender_item_id = ANY($1) OR receiver_item_id = ANY($1))
+                AND status NOT IN ('completed', 'rejected', 'cancelled')
+            `, [itemIds]);
+
+            // Get all affected exchanges to revert other items' statuses
+            const affectedExchanges = await client.query(`
+                SELECT sender_item_id, receiver_item_id 
+                FROM ExchangeRequest 
+                WHERE (sender_item_id = ANY($1) OR receiver_item_id = ANY($1))
+            `, [itemIds]);
+
+            // Revert status of items in affected exchanges
+            for (const exchange of affectedExchanges.rows) {
+                const otherItemId = itemIds.includes(exchange.sender_item_id)
+                    ? exchange.receiver_item_id
+                    : exchange.sender_item_id;
+
+                // Only revert if the other item doesn't belong to the user being deleted
+                if (!itemIds.includes(otherItemId)) {
+                    await client.query(`
+                        UPDATE Item SET status = 'available' 
+                        WHERE item_id = $1 AND status IN ('pending_offer', 'exchanging')
+                    `, [otherItemId]);
+                }
+            }
+
+            // Delete all items owned by user (cascade will handle images)
+            await client.query('DELETE FROM Item WHERE user_id = $1', [id]);
+        }
+
+        // Delete from Student table if exists
+        await client.query('DELETE FROM Student WHERE student_id = $1', [id]);
+
+        // Delete user
+        const result = await client.query('DELETE FROM "User" WHERE user_id = $1 RETURNING user_id', [id]);
+
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        await client.query('COMMIT');
+        res.json({
+            message: 'User and all associated items deleted successfully',
+            deletedItemsCount: itemIds.length
+        });
+    } catch (err) {
+        if (client) await client.query('ROLLBACK');
+        console.error('Error deleting user:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (client) client.release();
+    }
+});
+
 
 // POST create item
 app.post('/api/items', upload.array('images'), async (req, res) => {

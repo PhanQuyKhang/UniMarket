@@ -85,6 +85,20 @@ export const api = {
         return response.json();
     },
 
+    deleteUser: async (userId: string): Promise<void> => {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'DELETE',
+            cache: 'no-store'
+        });
+        if (!response.ok) throw new Error('Failed to delete user');
+    },
+
+    getAllUsers: async (): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/users`, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Failed to fetch users');
+        return response.json();
+    },
+
     // Exchange Requests
     getExchangeRequests: async (userId: string): Promise<ExchangeRequest[]> => {
         const response = await fetch(`${API_URL}/users/${userId}/exchange-requests`, { cache: 'no-store' });
