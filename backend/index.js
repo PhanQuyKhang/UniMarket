@@ -86,7 +86,7 @@ app.get('/api/items', async (req, res) => {
             category: row.category,
             condition: row.condition,
             price: parseFloat(row.price),
-            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
+            images: (row.image_ids || []).map(id => `${config.app.url}/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -123,7 +123,7 @@ app.get('/api/items/:id', async (req, res) => {
             category: row.category,
             condition: row.condition,
             price: parseFloat(row.price),
-            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
+            images: (row.image_ids || []).map(id => `${config.app.url}/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -202,7 +202,7 @@ app.get('/api/users/:userId/items', async (req, res) => {
             category: row.category,
             condition: row.condition,
             price: parseFloat(row.price),
-            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
+            images: (row.image_ids || []).map(id => `${config.app.url}/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -377,7 +377,7 @@ app.post('/api/items', upload.array('images'), async (req, res) => {
             category: row.category,
             condition: row.condition,
             price: parseFloat(row.price),
-            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
+            images: (row.image_ids || []).map(id => `${config.app.url}/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
@@ -468,7 +468,7 @@ app.put('/api/items/:id', upload.array('images'), async (req, res) => {
             category: row.category,
             condition: row.condition,
             price: parseFloat(row.price),
-            images: (row.image_ids || []).map(id => `http://localhost:5000/api/images/${id}`),
+            images: (row.image_ids || []).map(id => `${config.app.url}/api/images/${id}`),
             seller: {
                 name: row.seller_name,
                 avatar: row.seller_avatar,
