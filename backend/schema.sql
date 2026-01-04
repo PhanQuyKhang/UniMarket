@@ -40,7 +40,7 @@ CREATE TABLE "User" (
     email        VARCHAR(255) NOT NULL UNIQUE,
     avatar_url   TEXT,
     join_date    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    contact_link TEXT NOT NULL
+    contact_link TEXT NOT NULL -- Stores JSON string of contact details
 );
 
 CREATE TABLE Student (
@@ -66,6 +66,7 @@ CREATE TABLE Item (
     description  TEXT,
     condition    VARCHAR(255) NOT NULL,
     price        NUMERIC(12,2) NOT NULL,
+    location     VARCHAR(255), -- Added to support item-specific location
     status       item_status DEFAULT 'available',
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
