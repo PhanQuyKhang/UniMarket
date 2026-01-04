@@ -34,7 +34,7 @@ interface UserProfileProps {
   onViewItem?: (itemId?: string) => void;
 }
 
-export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEditItem, onEditProfile, exchangeRequests = [], onAcceptExchange, onRejectExchange, onViewItem, onCompleteExchange }: UserProfileProps) {
+export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEditItem, onEditProfile, exchangeRequests = [], onViewItem }: UserProfileProps) {
   const [activeTab, setActiveTab] = useState('selling');
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -214,10 +214,7 @@ export function UserProfile({ userItems, user, onItemClick, onSellNewItem, onEdi
                   <NotificationItem
                     key={req.id}
                     notification={notif}
-                    onAccept={onAcceptExchange}
-                    onReject={onRejectExchange}
                     onOpenItem={(itemId) => onViewItem?.(itemId)}
-                    onComplete={onCompleteExchange}
                   />
                 );
               })}

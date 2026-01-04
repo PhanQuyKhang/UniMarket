@@ -49,6 +49,20 @@ function AppContent() {
   // Load initial data
   useEffect(() => {
     refreshItemsFromDatabase();
+
+    // Check for saved user session
+    const savedUser = localStorage.getItem('uniMarketUser');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        setIsLoggedIn(true);
+        // Refresh items and user-specific data (will rely on user state change effect)
+      } catch (error) {
+        console.error('Failed to parse saved user:', error);
+        localStorage.removeItem('uniMarketUser');
+      }
+    }
   }, []);
 
   const navigateToPage = (newPage: string, context?: { item?: Item | null; userId?: string | null; itemStack?: Item[] }, push = true) => {
@@ -226,6 +240,15 @@ function AppContent() {
         setExchangeRequests(requests);
 
         setCurrentPage('profile');
+
+        // Save to localStorage
+        localStorage.setItem('uniMarketUser', JSON.stringify({
+          id: String(backendUser.id),
+          name: backendUser.name,
+          email: backendUser.email,
+          avatar: backendUser.picture,
+        }));
+
         toast.success(`Successfully logged in as ${backendUser.name}`);
       }
     } catch (error) {
@@ -247,7 +270,11 @@ function AppContent() {
     setUser(null);
     setUserItems([]);
     setExchangeRequests([]);
+    setUser(null);
+    setUserItems([]);
+    setExchangeRequests([]);
     setCurrentPage('home');
+    localStorage.removeItem('uniMarketUser');
     toast.success('Successfully logged out!');
   };
 
@@ -277,7 +304,17 @@ function AppContent() {
       ]);
       setUserItems(myItems);
       setExchangeRequests(requests);
+      setExchangeRequests(requests);
       setCurrentPage('profile');
+
+      // Save to localStorage
+      localStorage.setItem('uniMarketUser', JSON.stringify({
+        id: backendUser.id,
+        name: backendUser.name,
+        email: backendUser.email,
+        avatar: backendUser.picture,
+      }));
+
       toast.success('Test login successful!');
     } catch (error) {
       console.error(error);
@@ -314,6 +351,17 @@ function AppContent() {
 
       // Navigate to admin page (this will call loadAllUsers)
       handleNavigate('admin');
+
+      // Navigate to admin page (this will call loadAllUsers)
+      handleNavigate('admin');
+
+      // Save to localStorage
+      localStorage.setItem('uniMarketUser', JSON.stringify({
+        id: String(backendUser.id),
+        name: backendUser.name,
+        email: backendUser.email,
+        avatar: backendUser.picture,
+      }));
 
       toast.success('Logged in as admin!');
     } catch (error) {
@@ -622,8 +670,6 @@ function AppContent() {
             onEditItem={handleEditItem}
             onItemClick={handleItemClick}
             onSellNewItem={() => navigateToPage('sell')}
-            onAcceptExchange={handleAcceptExchange}
-            onRejectExchange={handleRejectExchange}
             onViewItem={(itemId) => {
               const item = items.find(i => i.id === itemId);
               if (item) handleItemClick(item);

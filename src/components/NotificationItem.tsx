@@ -26,18 +26,12 @@ export interface Notification {
 interface NotificationItemProps {
   notification: Notification;
   onMarkRead?: (id: string) => void;
-  onAccept?: (id: string) => void;
-  onReject?: (id: string) => void;
-  onComplete?: (id: string) => void;
   onOpenItem?: (itemId: string | undefined) => void;
 }
 
 export function NotificationItem({
   notification,
   onMarkRead,
-  onAccept,
-  onReject,
-  onComplete,
   onOpenItem,
 }: NotificationItemProps) {
   const timeLabel = notification.createdAt
@@ -96,44 +90,7 @@ export function NotificationItem({
               </Button>
             )}
 
-            {/* Accept/Reject for exchange notifications */}
-            {notification.type === "exchange" && notification.status === "pending" && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAccept?.(notification.id)}
-                  className="gap-2"
-                  aria-label="Accept request"
-                >
-                  <Check className="h-4 w-4" />
-                  Accept
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onReject?.(notification.id)}
-                  className="gap-2"
-                  aria-label="Reject request"
-                >
-                  <X className="h-4 w-4" />
-                  Reject
-                </Button>
-              </>
-            )}
-
-            {/* Offer Complete for accepted exchange notifications */}
-            {notification.type === "exchange" && notification.status === "accepted" && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onComplete?.(notification.id)}
-                className="gap-2"
-              >
-                <Check className="h-4 w-4" />
-                Mark Complete
-              </Button>
-            )}
+            {/* Action buttons removed as notifications should only display information */}
 
             {/* Mark read / unread */}
             <Button
