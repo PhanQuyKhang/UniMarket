@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
 import {
   Eye,
   EyeOff,
@@ -19,16 +18,6 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { Item } from "./ItemCard";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { UserDataService, UserData, Report } from "../data/userDataService";
 
 export interface Report {
@@ -81,14 +70,6 @@ export function AdminPage({
 }: AdminDashboardProps) {
   const [itemSearchQuery, setItemSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
-  const [actionDialog, setActionDialog] = useState<{
-    type: 'censor' | 'delete' | 'report' | 'user' | null;
-    data?: any;
-  }>({ type: null });
-  const [actionNote, setActionNote] = useState('');
-  const [newUserStatus, setNewUserStatus] = useState<UserAccount['status']>('active');
 
   const pendingReportsCount = reports.filter(r => r.status === 'pending').length;
   const censoredItemsCount = items.filter(i => (i as any).censored).length;
@@ -104,39 +85,24 @@ export function AdminPage({
   );
 
   const handleCensorAction = (item: Item, censor: boolean) => {
-    setActionDialog({ type: 'censor', data: { item, censor } });
+    onCensorItem(item.id, censor);
   };
 
   const handleDeleteAction = (item: Item) => {
-    console.log('Delete button clicked for item:', item.id, item.title);
-    console.log('Setting action dialog to:', { type: 'delete', data: item });
-    setActionDialog({ type: 'delete', data: item });
+    onDeleteItem(item.id);
+  };
+
+  const handleDeleteUserAction = (user: UserAccount) => {
+    console.log('Delete user button clicked:', user.id, user.name);
+    onDeleteUser(user.id);
   };
 
   const handleReportAction = (report: Report, status: Report['status']) => {
-    setActionDialog({ type: 'report', data: { report, status } });
-    setSelectedReport(report);
+    onUpdateReportStatus(report.id, status);
   };
 
   const handleUserAction = (user: UserAccount, status: UserAccount['status']) => {
-    setActionDialog({ type: 'user', data: { user, status } });
-    setSelectedUser(user);
-    setNewUserStatus(status);
-  };
-
-  const confirmAction = () => {
-    if (actionDialog.type === 'censor' && actionDialog.data) {
-      onCensorItem(actionDialog.data.item.id, actionDialog.data.censor);
-    } else if (actionDialog.type === 'delete' && actionDialog.data) {
-      onDeleteItem(actionDialog.data.id);
-    } else if (actionDialog.type === 'report' && actionDialog.data) {
-      onUpdateReportStatus(actionDialog.data.report.id, actionDialog.data.status, actionNote);
-    } else if (actionDialog.type === 'user' && actionDialog.data) {
-      onUpdateUserStatus(actionDialog.data.user.id, actionDialog.data.status, actionNote);
-    }
-
-    setActionDialog({ type: null });
-    setActionNote('');
+    onUpdateUserStatus(user.id, status);
   };
 
   const getStatusColor = (status: string) => {
@@ -258,7 +224,7 @@ export function AdminPage({
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {/* Owner and posted time */}
-                        {item.ownerId} • {item.timePosted}
+                        {item.seller.name} • {item.timePosted}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -292,14 +258,10 @@ export function AdminPage({
                         type="button"
                         size="sm"
                         variant="destructive"
-                        onClick={() => {
-                          console.log('DELETE BUTTON CLICKED! Deleting item:', item.id, item.title);
-                          onDeleteItem(item.id);
-                        }}
+                        onClick={() => handleDeleteAction(item)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      {console.log('Rendering delete button for:', item.title)}
                     </div>
                   </div>
                 ))}
@@ -488,7 +450,7 @@ export function AdminPage({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => onDeleteUser(user.id)}
+                        onClick={() => handleDeleteUserAction(user)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -505,68 +467,6 @@ export function AdminPage({
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={actionDialog.type !== null} onOpenChange={() => setActionDialog({ type: null })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {actionDialog.type === 'censor' && 'Confirm Item Censorship'}
-              {actionDialog.type === 'delete' && 'Confirm Item Deletion'}
-              {actionDialog.type === 'report' && 'Update Report Status'}
-              {actionDialog.type === 'user' && 'Update User Status'}
-            </DialogTitle>
-            <DialogDescription>
-              {actionDialog.type === 'censor' && actionDialog.data?.censor &&
-                `Are you sure you want to censor "${actionDialog.data?.item?.title}"? This item will be hidden from public view.`
-              }
-              {actionDialog.type === 'censor' && !actionDialog.data?.censor &&
-                `Are you sure you want to uncensor "${actionDialog.data?.item?.title}"? This item will be visible to users again.`
-              }
-              {actionDialog.type === 'delete' &&
-                `Are you sure you want to permanently delete "${actionDialog.data?.title}"? This action cannot be undone.`
-              }
-              {actionDialog.type === 'report' &&
-                `Update the status of this report to "${actionDialog.data?.status}". Add notes for your records.`
-              }
-              {actionDialog.type === 'user' &&
-                `Change user status to "${actionDialog.data?.status}". Please provide a reason for this action.`
-              }
-            </DialogDescription>
-          </DialogHeader>
-
-          {(actionDialog.type === 'report' || actionDialog.type === 'user') && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="action-note">
-                  {actionDialog.type === 'report' ? 'Admin Notes' : 'Reason'}
-                </Label>
-                <Textarea
-                  id="action-note"
-                  placeholder={actionDialog.type === 'report'
-                    ? "Add notes about this report..."
-                    : "Explain why this action is being taken..."}
-                  value={actionNote}
-                  onChange={(e) => setActionNote(e.target.value)}
-                  rows={3}
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialog({ type: null })}>
-              Cancel
-            </Button>
-            <Button
-              variant={actionDialog.type === 'delete' || (actionDialog.type === 'user' && actionDialog.data?.status === 'banned') ? 'destructive' : 'default'}
-              onClick={confirmAction}
-            >
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

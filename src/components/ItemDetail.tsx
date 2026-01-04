@@ -107,13 +107,10 @@ export function ItemDetail({ item, onBack, onExchange, isOwner, exchangeRequests
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={() => {
-                      console.log('View profile clicked. ownerId:', item.ownerId, 'seller.name:', item.seller.name);
-                      if (item.ownerId) {
-                        onViewUserProfile?.(item.ownerId);
-                      } else {
-                        console.warn('No ownerId found for item, falling back to name (might fail if backend expects ID)');
-                        onViewUserProfile?.(item.seller.name);
+                      if (item.ownerId && onViewUserProfile) {
+                        onViewUserProfile(item.ownerId);
                       }
                     }}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"

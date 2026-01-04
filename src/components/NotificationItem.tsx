@@ -14,7 +14,7 @@ export interface Notification {
   body?: string;
   createdAt?: string; // ISO string
   read?: boolean;
-  status?: "pending" | "accepted" | "rejected" | "info";
+  status?: "pending" | "accepted" | "rejected" | "info" | "completed" | "cancelled";
   from?: {
     name?: string;
     avatar?: string;
@@ -41,7 +41,9 @@ export function NotificationItem({
   const statusBadge = (() => {
     if (notification.status === "pending") return <Badge variant="secondary">Pending</Badge>;
     if (notification.status === "accepted") return <Badge variant="default">Accepted</Badge>;
-    if (notification.status === "rejected") return <Badge variant="outline">Rejected</Badge>;
+    if (notification.status === "rejected") return <Badge variant="destructive">Rejected</Badge>;
+    if (notification.status === "completed") return <Badge variant="default" className="bg-green-600">Completed</Badge>;
+    if (notification.status === "cancelled") return <Badge variant="outline" className="border-red-500 text-red-500">Cancelled</Badge>;
     return <Badge variant="ghost">Info</Badge>;
   })();
 

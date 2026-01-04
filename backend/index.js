@@ -186,6 +186,55 @@ app.get('/api/users/:userId', async (req, res) => {
     }
 });
 
+// PUT update user profile
+app.put('/api/users/:userId', async (req, res) => {
+    let client;
+    try {
+        const { userId } = req.params;
+        const { name, phone, facebook, instagram, twitter, linkedin } = req.body;
+
+        client = await pool.connect();
+
+        const contactData = { phone, facebook, instagram, twitter, linkedin };
+        const contactLinkJson = JSON.stringify(contactData);
+
+        await client.query(`
+            UPDATE "User"
+            SET full_name = COALESCE($1, full_name),
+                contact_link = $2
+            WHERE user_id = $3
+        `, [name, contactLinkJson, userId]);
+
+        const result = await client.query(`
+            SELECT 
+                u.user_id,
+                u.email,
+                u.full_name,
+                u.avatar_url,
+                u.contact_link
+            FROM "User" u
+            WHERE u.user_id = $1
+        `, [userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const user = result.rows[0];
+        // Parse contact_link if needed, but returning as is is fine if frontend parses it?
+        // Actually best to return flattened if frontend expects it, but let's stick to returning what DB has + flattened helpers if needed.
+        // For consistency with GET /api/users/:userId, let's look at how that returns.
+        // It returns row directly.
+
+        res.json(user);
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // GET items by user ID
 app.get('/api/users/:userId/items', async (req, res) => {
     let client;

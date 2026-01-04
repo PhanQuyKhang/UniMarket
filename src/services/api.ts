@@ -52,7 +52,10 @@ export const api = {
             method: 'DELETE',
             cache: 'no-store'
         });
-        if (!response.ok) throw new Error('Failed to delete item');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || 'Failed to delete item');
+        }
     },
 
     // Users
@@ -79,6 +82,20 @@ export const api = {
         return response.json();
     },
 
+    updateProfile: async (userId: string, data: any): Promise<any> => {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || 'Failed to update profile');
+        }
+        return response.json();
+    },
+
     getUserItems: async (userId: string): Promise<Item[]> => {
         const response = await fetch(`${API_URL}/users/${userId}/items`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Failed to fetch user items');
@@ -90,7 +107,10 @@ export const api = {
             method: 'DELETE',
             cache: 'no-store'
         });
-        if (!response.ok) throw new Error('Failed to delete user');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || 'Failed to delete user');
+        }
     },
 
     getAllUsers: async (): Promise<any[]> => {

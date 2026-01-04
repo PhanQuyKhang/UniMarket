@@ -278,9 +278,7 @@ function AppContent() {
     toast.success('Successfully logged out!');
   };
 
-  const handleEditProfile = (profileData: any) => {
-    toast.info('Profile update not implemented yet');
-  };
+
 
   const handleTestLogin = async () => {
     const testUser = {
@@ -484,27 +482,29 @@ function AppContent() {
       }
 
       toast.success('Item deleted successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete item:', error);
-      toast.error('Failed to delete item');
+      toast.error(error.message || 'Failed to delete item');
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     if (!user) return;
+    console.log('App: handleDeleteUser called for ID:', userId);
 
-    // Confirm deletion
-    if (!window.confirm('Are you sure you want to delete this user? This will also delete all their items and cancel all related exchanges. This action cannot be undone.')) {
-      return;
-    }
+    // Confirmation handled by UI component
 
     try {
+      console.log('App: Calling api.deleteUser...');
       await api.deleteUser(userId);
+      console.log('App: User deleted from API. Refreshing data...');
+      await loadAllUsers(); // Refresh the list of users for the admin panel
       await refreshAllUserData();
+      console.log('App: Data refreshed.');
       toast.success('User and all associated items deleted successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete user:', error);
-      toast.error('Failed to delete user');
+      toast.error(error.message || 'Failed to delete user');
     }
   };
 
@@ -594,6 +594,27 @@ function AppContent() {
     } catch (error) {
       console.error('Failed to cancel exchange:', error);
       toast.error('Failed to cancel exchange');
+    }
+  };
+
+  const handleEditProfile = async (profileData: any) => {
+    if (!user) return;
+    try {
+      const updatedUser = await api.updateProfile(user.id, profileData);
+      setUser(prev => prev ? ({ ...prev, ...profileData, name: updatedUser.name }) : null);
+
+      // Also update localStorage
+      const storedUser = localStorage.getItem('uniMarketUser');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        localStorage.setItem('uniMarketUser', JSON.stringify({ ...parsed, name: updatedUser.name }));
+      }
+
+      await refreshAllUserData();
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      toast.error(error.message || 'Failed to update profile');
     }
   };
 

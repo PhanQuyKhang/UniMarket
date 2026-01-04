@@ -37,8 +37,10 @@ export function UserProfileView({ userId, onBack, onItemClick }: UserProfileView
 
         // Ensure user data has rating (mock if missing)
         setUser({
-          ...userData,
-          rating: userData.rating || 5.0 // Default rating if not in DB yet
+          name: userData.name || userData.full_name || 'User',
+          email: userData.email,
+          avatar: userData.avatar || userData.avatar_url || '',
+          rating: userData.rating || 5.0
         });
         setUserItems(itemsData);
       } catch (error) {
