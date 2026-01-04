@@ -25,7 +25,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => onNavigate('home')}
         >
-          <img src="/logo.png" alt="UniMarket Logo" className="h-16 w-16" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="UniMarket Logo" className="h-20 w-20" />
           <span className="font-semibold text-lg">UniMarket</span>
         </div>
 
