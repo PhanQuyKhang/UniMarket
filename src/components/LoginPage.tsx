@@ -91,7 +91,7 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
         <CardHeader className="text-center">
           {/* Logo */}
           <div className="flex justify-center mb-4">
-            <img src="../../public/logo.png" alt="UniMarket Logo" className="h-20 w-20" />
+            <img src="/logo.png" alt="UniMarket Logo" className="h-20 w-20" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome to UniMarket</CardTitle>
           <CardDescription>
@@ -109,7 +109,7 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
               Choose Google Account
             </Button>
           </div>
-          
+
           {/* Demo admin login for testing */}
           {onAdminLogin && (
             <Button
@@ -120,9 +120,9 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
               Admin Login (demo)
             </Button>
           )}
-          
+
           {onTestLogin && (
-            <Button 
+            <Button
               onClick={onTestLogin}
               className="w-full"
               variant="secondary"
@@ -130,9 +130,9 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
               Test Login (Demo)
             </Button>
           )}
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             onClick={onBack}
             className="w-full"
           >
