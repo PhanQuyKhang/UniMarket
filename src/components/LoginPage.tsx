@@ -123,7 +123,7 @@ export function LoginPage({ onGoogleLogin, onBack, onTestLogin, onAdminLogin }: 
             <Button
               variant="ghost"
               onClick={() => loginWithChooser({ prompt: 'select_account' })}
-              className="w-full"
+              className="w-full border-2 border-black"
             >
               Choose Google Account
             </Button>

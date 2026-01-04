@@ -71,7 +71,7 @@ export function Header({ currentPage, onNavigate, onProfileClick, onLogout, sear
                   variant="ghost"
                   size="sm"
                   onClick={() => onNavigate('exchange-requests')}
-                  className="hidden sm:flex items-center gap-2 text-primary-foreground hover:bg-white/10 hover:text-white"
+                  className="hidden sm:flex items-center gap-2 text-primary-foreground hover:bg-white/10 hover:text-white border-2 border-white"
                   title="Exchange Requests"
                 >
                   <ArrowLeftRight className="h-4 w-4" />
